@@ -1,30 +1,114 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
+import { X, Minus, Plus, ShoppingBag, Trash2, CreditCard, Loader2 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+// Dynamically load Razorpay script
+const loadRazorpay = () => {
+    return new Promise((resolve) => {
+        if (window.Razorpay) return resolve(true);
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+        document.body.appendChild(script);
+    });
+};
+
 const CartDrawer = () => {
     const { isCartOpen, setIsCartOpen, cart, updateQuantity, removeFromCart, clearCart } = useCart();
+    const { user } = useAuth();
     const navigate = useNavigate();
+    const [paying, setPaying] = useState(false);
 
     const grandTotal = cart.totalPrice;
 
-    const handleCheckout = async () => {
+    const handleRazorpayPayment = async () => {
+        if (!user) {
+            toast.error('Please login to continue');
+            return;
+        }
+
+        setPaying(true);
+
         try {
+            const loaded = await loadRazorpay();
+            if (!loaded) {
+                toast.error('Payment gateway failed to load. Check your internet.');
+                setPaying(false);
+                return;
+            }
+
             const token = localStorage.getItem('token');
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-            await axios.post(`${API_URL}/orders`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
+
+            // Step 1: Create Razorpay order on backend
+            const { data } = await axios.post(
+                `${API_URL}/payment/create-order`,
+                {},
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            // Step 2: Open Razorpay checkout
+            const options = {
+                key: data.keyId,
+                amount: data.amount,
+                currency: data.currency,
+                name: 'Amrita Coffee House',
+                description: 'Your delicious order ☕',
+                image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=100&h=100&fit=crop',
+                order_id: data.orderId,
+                handler: async (response) => {
+                    try {
+                        // Step 3: Verify payment on backend
+                        await axios.post(
+                            `${API_URL}/payment/verify`,
+                            {
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature,
+                            },
+                            { headers: { Authorization: `Bearer ${token}` } }
+                        );
+
+                        clearCart();
+                        setIsCartOpen(false);
+                        toast.success('🎉 Payment successful! Order placed.', { duration: 4000 });
+                        navigate('/profile');
+                    } catch (err) {
+                        toast.error('Payment verification failed. Contact support.');
+                    }
+                },
+                prefill: {
+                    name: user?.name || '',
+                    email: user?.email || '',
+                },
+                theme: {
+                    color: '#C8976E', // accent color matches the app
+                    backdrop_color: 'rgba(0,0,0,0.85)',
+                },
+                modal: {
+                    ondismiss: () => {
+                        setPaying(false);
+                        toast('Payment cancelled.', { icon: '⚠️' });
+                    },
+                },
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.on('payment.failed', (response) => {
+                toast.error(`Payment failed: ${response.error.description}`);
+                setPaying(false);
             });
-            clearCart();
-            setIsCartOpen(false);
-            toast.success('Order placed successfully!');
-            navigate('/profile');
+            rzp.open();
         } catch (err) {
-            toast.error(err.response?.data?.error || 'Failed to place order');
+            toast.error(err.response?.data?.error || 'Could not initiate payment');
+            setPaying(false);
         }
     };
 
@@ -75,6 +159,7 @@ const CartDrawer = () => {
                                         <img
                                             src={item.image}
                                             alt={item.name}
+                                            loading="lazy"
                                             className="w-20 h-20 object-cover rounded-xl"
                                         />
                                         <div className="flex-1 flex flex-col justify-between">
@@ -122,12 +207,30 @@ const CartDrawer = () => {
                                         <span className="text-primary">₹{grandTotal}</span>
                                     </div>
                                 </div>
+
+                                {/* Razorpay Pay Button */}
                                 <button
-                                    onClick={handleCheckout}
-                                    className="w-full py-4 bg-primary text-white rounded-xl font-bold tracking-widest uppercase hover:bg-primary-dark transition-all duration-300 shadow-lg shadow-primary/30"
+                                    onClick={handleRazorpayPayment}
+                                    disabled={paying}
+                                    className="w-full py-4 bg-primary text-white rounded-xl font-bold tracking-widest uppercase hover:bg-primary-dark transition-all duration-300 shadow-lg shadow-primary/30 flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
-                                    Proceed to Checkout
+                                    {paying ? (
+                                        <>
+                                            <Loader2 size={20} className="animate-spin" />
+                                            Opening Payment...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <CreditCard size={20} />
+                                            Pay ₹{grandTotal} Securely
+                                        </>
+                                    )}
                                 </button>
+
+                                {/* Trust badge */}
+                                <p className="text-center text-xs text-white/30 mt-3 flex items-center justify-center gap-1">
+                                    🔒 Secured by Razorpay · UPI · Cards · Wallets
+                                </p>
                             </div>
                         )}
                     </motion.div>

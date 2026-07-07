@@ -8,9 +8,10 @@ const MenuCard = ({ item }) => {
 
     return (
         <motion.div
-            layout
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } }
+            }}
             exit={{ opacity: 0, scale: 0.9 }}
             whileHover={{ y: -8 }}
             className="group relative bg-[#1a1a1a] rounded-[2rem] overflow-hidden border border-white/5 shadow-sm hover:shadow-2xl transition-all duration-500"
@@ -20,6 +21,7 @@ const MenuCard = ({ item }) => {
                 <img 
                     src={item.image} 
                     alt={item.name} 
+                    loading="lazy"
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>

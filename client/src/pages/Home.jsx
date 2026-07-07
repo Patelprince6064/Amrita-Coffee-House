@@ -172,17 +172,33 @@ const Home = () => {
                             initial={{ opacity: 0, x: 50 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
+                            transition={{ duration: 0.9, ease: "easeOut" }}
                             className="lg:w-1/2 relative"
                         >
-                            <div className="relative z-10 rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl">
+                            <div className="relative z-10 rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl group">
                                 <img 
-                                    src='../public/cafe.jpeg'
+                                    src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1200&q=85"
                                     alt="Coffee Craft" 
-                                    className="w-full h-[600px] object-cover"
+                                    className="w-full h-[700px] object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
                                 />
+                                {/* Gradient overlay at bottom */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
+
+                                {/* Floating badge inside image */}
+                                <div className="absolute bottom-8 left-8 flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl px-5 py-3">
+                                    <div className="p-2 bg-accent rounded-xl">
+                                        <Coffee size={18} className="text-white" />
+                                    </div>
+                                    <div>
+                                        <p className="text-white font-bold text-sm">Handcrafted</p>
+                                        <p className="text-white/60 text-xs">with Premium Beans</p>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="absolute -top-10 -right-10 w-64 h-64 bg-accent/20 blur-3xl rounded-full -z-0"></div>
-                            <div className="absolute -bottom-10 -left-10 w-64 h-64 bg-primary/20 blur-3xl rounded-full -z-0"></div>
+
+                            {/* Glow blobs */}
+                            <div className="absolute -top-10 -right-10 w-72 h-72 bg-accent/20 blur-[100px] rounded-full -z-10"></div>
+                            <div className="absolute -bottom-10 -left-10 w-72 h-72 bg-primary/20 blur-[100px] rounded-full -z-10"></div>
                         </motion.div>
                     </div>
                 </div>

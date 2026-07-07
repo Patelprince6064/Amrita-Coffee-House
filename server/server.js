@@ -9,6 +9,7 @@ const menu = require('./routes/menuRoutes');
 const reviews = require('./routes/reviewRoutes');
 const cart = require('./routes/cartRoutes');
 const orders = require('./routes/orderRoutes');
+const payment = require('./routes/paymentRoutes');
 
 // Load env vars
 dotenv.config();
@@ -30,6 +31,7 @@ app.use('/api/menu', menu);
 app.use('/api/reviews', reviews);
 app.use('/api/cart', cart);
 app.use('/api/orders', orders);
+app.use('/api/payment', payment);
 
 // Basic Route
 app.get('/', (req, res) => {

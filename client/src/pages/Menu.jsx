@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Search, Filter, Coffee, IceCream, Utensils, Loader2 } from 'lucide-react';
 import MenuCard from '../components/MenuCard';
 
@@ -185,14 +185,17 @@ setFilteredItems(dummyData);
                     </div>
                 ) : (
                     <motion.div
-                        layout
                         className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
+                        initial="hidden"
+                        animate="visible"
+                        variants={{
+                            hidden: {},
+                            visible: { transition: { staggerChildren: 0.04 } }
+                        }}
                     >
-                        <AnimatePresence mode="popLayout">
-                            {filteredItems.map((item) => (
-                                <MenuCard key={item._id} item={item} />
-                            ))}
-                        </AnimatePresence>
+                        {filteredItems.map((item) => (
+                            <MenuCard key={item._id} item={item} />
+                        ))}
                     </motion.div>
                 )}
 
