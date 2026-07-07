@@ -3,13 +3,13 @@ import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Plus, Edit2, Trash2, LayoutDashboard, Utensils, MessageSquare, TrendingUp } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { API_URL } from '../services/api';
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('overview');
     const [menuItems, setMenuItems] = useState([]);
     const [stats, setStats] = useState({ products: 0, reviews: 0 });
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
     useEffect(() => {
         fetchData();

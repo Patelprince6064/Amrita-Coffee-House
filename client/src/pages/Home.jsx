@@ -177,7 +177,7 @@ const Home = () => {
                         >
                             <div className="relative z-10 rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl group">
                                 <img 
-                                    src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1200&q=85"
+                                    src="/cafe.jpeg"
                                     alt="Coffee Craft" 
                                     className="w-full h-[700px] object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
                                 />

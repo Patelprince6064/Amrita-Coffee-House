@@ -4,6 +4,7 @@ import { User, Phone, MapPin, Camera, Save, Package, Clock, CheckCircle, Package
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { API_URL } from '../services/api';
 
 const Profile = () => {
     const { user, updateUser } = useAuth();
@@ -20,7 +21,6 @@ const Profile = () => {
     const [avatarFile, setAvatarFile] = useState(null);
     const [avatarPreview, setAvatarPreview] = useState(user?.avatar || '');
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
     useEffect(() => {
         if (activeTab === 'orders') {

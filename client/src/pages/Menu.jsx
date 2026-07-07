@@ -3,6 +3,7 @@ import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Search, Filter, Coffee, IceCream, Utensils, Loader2 } from 'lucide-react';
 import MenuCard from '../components/MenuCard';
+import { API_URL } from '../services/api';
 
 const Menu = () => {
     const [items, setItems] = useState([]);
@@ -87,7 +88,6 @@ const Menu = () => {
             ];
 
             try {
-                const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
                 const res = await axios.get(`${API_URL}/menu`);
                 const data = res.data?.data || res.data;
                 if (Array.isArray(data) && data.length > 0) {

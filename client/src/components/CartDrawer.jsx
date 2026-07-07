@@ -6,8 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import { API_URL } from '../services/api';
 
 // Dynamically load Razorpay script
 const loadRazorpay = () => {
@@ -38,6 +37,48 @@ const CartDrawer = () => {
         setPaying(true);
 
         try {
+            const token = localStorage.getItem('token');
+
+            // Step 1: Create order on backend (tells us if it's mock or real)
+            const { data } = await axios.post(
+                `${API_URL}/payment/create-order`,
+                {},
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            // Step 2: If mock mode is active, simulate payment verification
+            if (data.isMock) {
+                const toastId = toast.loading('Simulating Payment Gateway (Mock Mode)...');
+                
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                try {
+                    // Verify mock payment on backend
+                    await axios.post(
+                        `${API_URL}/payment/verify`,
+                        {
+                            razorpay_order_id: data.orderId,
+                            razorpay_payment_id: `mock_pay_${Math.random().toString(36).substr(2, 9)}`,
+                            razorpay_signature: 'mock_signature',
+                        },
+                        { headers: { Authorization: `Bearer ${token}` } }
+                    );
+
+                    toast.dismiss(toastId);
+                    clearCart();
+                    setIsCartOpen(false);
+                    toast.success('🎉 Order placed successfully (Mock Payment)!', { duration: 4000 });
+                    navigate('/profile');
+                } catch (err) {
+                    toast.dismiss(toastId);
+                    toast.error('Mock payment simulation failed.');
+                } finally {
+                    setPaying(false);
+                }
+                return;
+            }
+
+            // Step 3: For real payments, load Razorpay and open checkout
             const loaded = await loadRazorpay();
             if (!loaded) {
                 toast.error('Payment gateway failed to load. Check your internet.');
@@ -45,16 +86,6 @@ const CartDrawer = () => {
                 return;
             }
 
-            const token = localStorage.getItem('token');
-
-            // Step 1: Create Razorpay order on backend
-            const { data } = await axios.post(
-                `${API_URL}/payment/create-order`,
-                {},
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-
-            // Step 2: Open Razorpay checkout
             const options = {
                 key: data.keyId,
                 amount: data.amount,
@@ -65,7 +96,7 @@ const CartDrawer = () => {
                 order_id: data.orderId,
                 handler: async (response) => {
                     try {
-                        // Step 3: Verify payment on backend
+                        // Step 4: Verify payment on backend
                         await axios.post(
                             `${API_URL}/payment/verify`,
                             {
@@ -82,6 +113,8 @@ const CartDrawer = () => {
                         navigate('/profile');
                     } catch (err) {
                         toast.error('Payment verification failed. Contact support.');
+                    } finally {
+                        setPaying(false);
                     }
                 },
                 prefill: {
